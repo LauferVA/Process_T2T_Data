@@ -10,21 +10,34 @@ DOWNLOAD_DIR="../RawData"
 mkdir -p "$DOWNLOAD_DIR"
 
 # List of directories to download, only if they don't already exist and are not empty
-ALL_DIRS=(bbi catLiftOffGenesV1 censat clinVar20220313 crispr cytoBandMapped dbSNP155 encode gwasSNPs2022-03-08 hgCactus hgLiftOver hgUnique hoffmanMappability hs1.2bit html hubs ixIxx liftOver microsatellites ncbiRefSeq proseq rdnaModel rnaseq sedefSeg$
+ALL_DIRS=(encode gwasSNPs2022-03-08 hgCactus hgLiftOver hgUnique hoffmanMappability hs1.2bit html hubs ixIxx liftOver microsatellites ncbiRefSeq proseq rdnaModel rnaseq sedefSegDups sgdpCopyNumber t2tRepeatMasker)
 
-# Loop through each directory and download it if it doesn't already exist and is not empty
+# Loop through each directory and create a SLURM job to download it
 for DIR in "${ALL_DIRS[@]}"; do
-    # Construct the path to where the directory would be if downloaded
     LOCAL_DIR_PATH="${DOWNLOAD_DIR}/${DIR}"
 
-    # Check if the directory exists and is not empty
+    # Skip download if the directory exists and is not empty
     if [ -d "$LOCAL_DIR_PATH" ] && [ "$(ls -A "$LOCAL_DIR_PATH")" ]; then
         echo "Directory $DIR already exists and is not empty. Skipping..."
         continue
     fi
 
-    echo "Downloading $DIR into $DOWNLOAD_DIR..."
-    wget -r -np -nH -P "$DOWNLOAD_DIR" -R "index.html*" "${BASE_URL}/${DIR}/"
+    # Create a SLURM script for the download job
+    jobScript="wget_${DIR}.sh"
+    cat > ${jobScript} << EOF
+#!/bin/bash
+#SBATCH --job-name=wget_$DIR
+#SBATCH --output=wget_$DIR_%j.out
+#SBATCH --time=02:00:00
+#SBATCH --mem=2G
+#SBATCH --ntasks=1
+
+# Command to download the directory
+wget -r -np -nH -P "$DOWNLOAD_DIR" -R "index.html*" "${BASE_URL}/${DIR}/"
+EOF
+
+    # Submit the job script to SLURM
+    sbatch ${jobScript}
 done
 
-echo "All downloads completed!"
+echo "Download jobs submitted!"
