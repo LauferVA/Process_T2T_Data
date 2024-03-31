@@ -4,7 +4,7 @@
 BWTW_TOOL="../Packages/bigWigToWig"
 BBTB_TOOL="../Packages/bigBedToBed"
 
-parentDir="/data/user/vlaufer/T2T/RawData"
+parentDir="/data/user/${USER}/T2T/RawData"
 
 # Find all subdirectories in the parent directory
 for dataDir in ${parentDir}/*/; do
