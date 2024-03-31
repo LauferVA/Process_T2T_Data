@@ -4,12 +4,17 @@
 BWTW_TOOL="../Packages/bigWigToWig"
 BBTB_TOOL="../Packages/bigBedToBed"
 
-dataDir="/data/user/vlaufer/T2T/RawData/hoffmanMappability"
+parentDir="/data/user/vlaufer/T2T/RawData"
 
-# Convert BigWig files to Wig
-for file in ${dataDir}/*.bw; do
-    jobScript="convert_${file##*/}.sh"
-    cat > ${jobScript} << EOF
+# Find all subdirectories in the parent directory
+for dataDir in ${parentDir}/*/; do
+    # Remove trailing slash for consistency in file naming
+    dataDir=${dataDir%/}
+
+    # Convert BigWig files to Wig
+    for file in ${dataDir}/*.bw; do
+        jobScript="${dataDir}/convert_${file##*/}.sh"
+        cat > ${jobScript} << EOF
 #!/bin/bash
 #SBATCH --job-name=convertBW2Wig
 #SBATCH --output=convertBW2Wig_%j.out
@@ -19,14 +24,13 @@ for file in ${dataDir}/*.bw; do
 
 ${BWTW_TOOL} "$file" "${file%.bw}.wig"
 EOF
-    sbatch ${jobScript}
-done
+   	sbatch ${jobScript}
+    done
 
-
-# Convert BigBed files to Bed
-for file in ${dataDir}/*.bb; do
-    jobScript="convert_${file##*/}.sh"
-    cat > ${jobScript} << EOF
+    # Convert BigBed files to Bed
+    for file in ${dataDir}/*.bb; do
+        jobScript="${dataDir}/convert_${file##*/}.sh"
+        cat > ${jobScript} << EOF
 #!/bin/bash
 #SBATCH --job-name=convertBB2Bed
 #SBATCH --output=convertBB2Bed_%j.out
@@ -36,6 +40,7 @@ for file in ${dataDir}/*.bb; do
 
 ${BBTB_TOOL} "$file" "${file%.bb}.bed"
 EOF
-    sbatch ${jobScript}
+   	sbatch ${jobScript}
+    done
 done
 
